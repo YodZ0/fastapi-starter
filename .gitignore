@@ -1,0 +1,16 @@
+__pycache__/
+__pycache__
+.idea/
+venv/
+.venv/
+.env
+
+.ruff_cache/
+.coverage
+
+logs/
+.format.log
+/**/.pytest_cache
+.mypy_cache/
+
+speech_analysis/certs/ftp/*
