@@ -1,6 +1,6 @@
 [project]
+
 name = "fastapi-starter"
-version = "0.1.0"
 description = ""
 authors = [
     {name = "YodZ0",email = "timur.g00gle@gmail.com"}
@@ -13,6 +13,8 @@ dependencies = [
     "pydantic-settings (>=2.7.1,<3.0.0)"
 ]
 
+[tool.poetry]
+package-mode = false
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
