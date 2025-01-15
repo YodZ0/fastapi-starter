@@ -11,22 +11,13 @@ class RunConfig(BaseModel):
     port: int = 8000
 
 
-class ApiV1Prefix(BaseModel):
-    prefix: str = "/v1"
-
-
-class ApiPrefix(BaseModel):
-    prefix: str = "/api"
-    v1: ApiV1Prefix = ApiV1Prefix()
-
-
 class DataBaseConfig(BaseModel):
     host: str
     port: int
     user: str
     password: str
     name: str
-    provider: str = "postgresql+psycopg_async"
+    provider: str = "postgresql+asyncpg"
 
     @property
     def dsn(self) -> str:
@@ -45,7 +36,6 @@ class Settings(BaseSettings):
     db: DataBaseConfig
     cors_origins: list[str]
     run: RunConfig = RunConfig()
-    api: ApiPrefix = ApiPrefix()
 
     model_config = SettingsConfigDict(
         env_file=(base_dir / ".env"),
