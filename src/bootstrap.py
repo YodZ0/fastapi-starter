@@ -15,8 +15,8 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     app = FastAPI(
-        title="Finance accounting",
-        description="Hello this is a description",
+        title="FastAPI",
+        description="Application escription",
         lifespan=lifespan,
     )
     app = apply_routes(apply_middleware(app))
