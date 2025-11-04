@@ -1,0 +1,29 @@
+version: 1
+disable_existing_loggers: false
+
+
+formatters:
+  standard:
+    format: "[%(levelname)s][%(asctime)s] - %(name)s : %(message)s"
+    datefmt: "%Y-%m-%d %H:%M:%S"
+
+  detailed:
+    format: "[%(levelname)s][%(asctime)s] - %(name)s [%(filename)s:%(funcName)s:%(lineno)d] : %(message)s"
+    datefmt: "%Y-%m-%d %H:%M:%S"
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: detailed
+    stream: ext://sys.stdout
+
+loggers:
+  app:
+    level: INFO
+    handlers: [console]
+    propagate: false
+
+root:
+  level: INFO
+  handlers: [console]

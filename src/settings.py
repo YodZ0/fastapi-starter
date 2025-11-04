@@ -1,9 +1,10 @@
 from pathlib import Path
+
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent  # backend
 
 
 class RunConfig(BaseModel):
@@ -11,7 +12,16 @@ class RunConfig(BaseModel):
     port: int = 8000
 
 
-class DataBaseConfig(BaseModel):
+class APIConfigV1(BaseModel):
+    prefix: str = "/v1"
+
+
+class APIConfig(BaseModel):
+    prefix: str = "/api"
+    v1: APIConfigV1 = APIConfigV1()
+
+
+class DatabaseConfig(BaseModel):
     host: str
     port: int
     user: str
@@ -19,35 +29,30 @@ class DataBaseConfig(BaseModel):
     name: str
     provider: str = "postgresql+asyncpg"
 
-    @property
-    def dsn(self) -> str:
-        return f"{self.provider}://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
-
+    echo: bool = False
     echo_pool: bool = False
     max_overflow: int = 10
     pool_size: int = 50
 
+    @property
+    def dsn(self) -> str:
+        return f"{self.provider}://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
+
 
 class Settings(BaseSettings):
-    debug: bool
-    base_url: str
-    base_dir: Path = BASE_DIR  # ..\fastapi-starter
-
-    db: DataBaseConfig
-    cors_origins: list[str]
-    run: RunConfig = RunConfig()
-
     model_config = SettingsConfigDict(
-        env_file=(base_dir / ".env"),
+        case_sensitive=False,
         env_file_encoding="utf-8",
         env_nested_delimiter="__",
-        case_sensitive=False,
+        env_file=(BASE_DIR / ".env"),
         extra="ignore",
     )
+    base_dir: Path = BASE_DIR
+    debug: bool
+    cors_origins: list[str]
+    run: RunConfig = RunConfig()
+    api: APIConfig = APIConfig()
+    db: DatabaseConfig
 
 
-def get_settings():
-    return Settings()
-
-
-settings = get_settings()
+settings = Settings()

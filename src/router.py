@@ -1,7 +1,14 @@
-from fastapi import FastAPI
-from src.apps.healthcheck.router import router as healthcheck_router
+from fastapi import FastAPI, APIRouter
+
+from src.api.v1 import router_v1
+from src.settings import settings
 
 
 def apply_routes(app: FastAPI) -> FastAPI:
-    app.include_router(healthcheck_router)
+    # Create main router
+    router = APIRouter(prefix=settings.api.prefix)
+    # Include API routers
+    router.include_router(router_v1)
+    # Include main router
+    app.include_router(router)
     return app
