@@ -9,8 +9,7 @@ RUN pip install --upgrade pip wheel "poetry==2.0.0"
 
 RUN poetry config virtualenvs.create false
 
-COPY poetry.lock ./
-COPY pyproject.toml ./
+COPY poetry.lock pyproject.toml ./
 
 RUN poetry install
 
