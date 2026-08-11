@@ -1,1 +1,1 @@
-# Base FastAPI application
+# FastAPI application boilerplate
