@@ -1,7 +1,14 @@
-from sqlalchemy import MetaData
-from sqlalchemy.orm import DeclarativeBase
+import uuid
 
-__all__ = ("Base",)
+from sqlalchemy import UUID, Identity, Integer, MetaData, func
+from sqlalchemy.ext.asyncio import AsyncAttrs
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
+__all__ = (
+    "Base",
+    "BaseInt",
+    "BaseUUID",
+)
 
 POSTGRES_INDEXES_NAMING_CONVENTION: dict[str, str] = {
     "ix": "ix_%(column_0_label)s",
@@ -12,5 +19,38 @@ POSTGRES_INDEXES_NAMING_CONVENTION: dict[str, str] = {
 }
 
 
-class Base(DeclarativeBase):
+class Base(AsyncAttrs, DeclarativeBase):
+    __abstract__ = True
+
     metadata = MetaData(naming_convention=POSTGRES_INDEXES_NAMING_CONVENTION)
+
+    repr_cols_num = 1
+    repr_cols: tuple[str, ...] = ()
+
+    def __repr__(self):
+        cols = []
+        for idx, col in enumerate(self.__table__.columns.keys()):
+            if col in self.repr_cols or idx < self.repr_cols_num:
+                cols.append(f"{col}={getattr(self, col)}")
+        return f"<{self.__class__.__name__}({', '.join(cols)})>"
+
+
+class BaseInt(Base):
+    __abstract__ = True
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        Identity(always=True),
+        primary_key=True,
+    )
+
+
+class BaseUUID(Base):
+    __abstract__ = True
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
+        primary_key=True,
+    )
