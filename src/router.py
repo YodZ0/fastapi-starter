@@ -1,4 +1,8 @@
-from fastapi import FastAPI, APIRouter
+"""
+Application router.
+"""
+
+from fastapi import APIRouter, FastAPI
 
 from src.api.v1 import router_v1
 from src.settings import settings
