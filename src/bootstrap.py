@@ -1,12 +1,19 @@
+"""
+Application bootstrap.
+Creates app, applies: middleware, routes, handlers etc.
+"""
+
 import logging
 from contextlib import asynccontextmanager
 
+from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI
 
-from src.settings import settings
+from src.di import setup_async_container
+from src.logs import setup_logging
 from src.middleware import apply_middleware
 from src.router import apply_routes
-from src.logs import setup_logging
+from src.settings import settings
 
 setup_logging(settings.base_dir)
 
@@ -17,6 +24,7 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     logger.info("Application started successfully!")
     yield
+    await app.state.dishka_container.close()
     logger.info("Application shut down.")
 
 
@@ -29,17 +37,15 @@ def create_app() -> FastAPI:
     2. Routes.
     3. Addition modules (admin-panel, handlers, etc.)
     """
-    docs_url = "/docs" if settings.debug else None
-    redoc_url = "/redoc" if settings.debug else None
-    openapi_url = "/openapi.json" if settings.debug else None
-
     app = FastAPI(
-        title="FastAPI app",
+        title=settings.app.title,
         lifespan=lifespan,
-        docs_url=docs_url,
-        redoc_url=redoc_url,
-        openapi_url=openapi_url,
+        docs_url=settings.app.docs_url,
+        redoc_url=settings.app.redoc_url,
+        openapi_url=settings.app.openapi_url,
     )
     app = apply_middleware(app)
     app = apply_routes(app)
+    container = setup_async_container()
+    setup_dishka(container, app)
     return app
