@@ -1,10 +1,20 @@
+"""
+Application settings.
+"""
+
 from pathlib import Path
 
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+BASE_DIR = Path(__file__).resolve().parent.parent  # fastapi-starter
 
-BASE_DIR = Path(__file__).resolve().parent.parent  # backend
+
+class ApplicationConfig(BaseModel):
+    title: str
+    docs_url: str | None = None
+    redoc_url: str | None = None
+    openapi_url: str | None = None
 
 
 class RunConfig(BaseModel):
@@ -48,8 +58,9 @@ class Settings(BaseSettings):
         extra="ignore",
     )
     base_dir: Path = BASE_DIR
-    debug: bool
     cors_origins: list[str]
+
+    app: ApplicationConfig
     run: RunConfig = RunConfig()
     api: APIConfig = APIConfig()
     db: DatabaseConfig
