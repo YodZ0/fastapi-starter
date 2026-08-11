@@ -57,6 +57,7 @@ class Settings(BaseSettings):
         env_file=(BASE_DIR / ".env"),
         extra="ignore",
     )
+    debug: bool = False
     base_dir: Path = BASE_DIR
     cors_origins: list[str]
 
