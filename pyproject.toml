@@ -11,7 +11,9 @@ dependencies = [
     "fastapi[standard]>=0.141.1",
     "pydantic>=2.13.4",
     "pydantic-settings>=2.15.0",
+    "pyyaml>=6.0.3",
     "sqlalchemy>=2.0.51",
+    "typer>=0.27.1",
 ]
 
 [dependency-groups]
