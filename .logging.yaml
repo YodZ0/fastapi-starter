@@ -1,6 +1,8 @@
 version: 1
 disable_existing_loggers: false
 
+# "$log_level" is substituted by setup_logging() before this file is parsed,
+# so verbosity comes from the settings and this file is environment agnostic.
 
 formatters:
   standard:
@@ -12,18 +14,53 @@ formatters:
     datefmt: "%Y-%m-%d %H:%M:%S"
 
 handlers:
+  # Neither handler sets a level: the loggers below are the only place where
+  # verbosity is decided.
   console:
     class: logging.StreamHandler
-    level: INFO
     formatter: detailed
+    stream: ext://sys.stdout
+
+  # For records whose source location points into a library rather than into
+  # our own code, so the file:function:line part carries no information.
+  console_plain:
+    class: logging.StreamHandler
+    formatter: standard
     stream: ext://sys.stdout
 
 loggers:
   app:
-    level: INFO
-    handlers: [console]
+    level: "$log_level"
+    handlers: [ console ]
     propagate: false
 
+  # Uvicorn installs its own handlers and formatters at startup. Naming its
+  # loggers here drops those handlers, otherwise its records keep uvicorn's
+  # own format and never reach the handlers configured above.
+  uvicorn:
+    level: INFO
+    handlers: [ console_plain ]
+    propagate: false
+
+  uvicorn.error:
+    level: INFO
+    propagate: true
+
+  uvicorn.access:
+    level: INFO
+    propagate: true
+
+  # Noisy third parties: at DEBUG they bury the application output.
+  # sqlalchemy.engine logs every statement it runs at INFO.
+  sqlalchemy.engine:
+    level: WARNING
+
+  alembic:
+    level: INFO
+
+  asyncio:
+    level: WARNING
+
 root:
-  level: INFO
-  handlers: [console]
+  level: "$log_level"
+  handlers: [ console ]
