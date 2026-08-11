@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 class BusinessLogicExceptionSchema(BaseModel):
     """
-    Схема базового исключения бизнес-логики.
+    Business-logic base exception schema.
     """
 
     type: str
@@ -13,8 +13,8 @@ class BusinessLogicExceptionSchema(BaseModel):
 
 class ModelAlreadyExistsErrorSchema(BusinessLogicExceptionSchema):
     """
-    Схема ошибки, возникающей при попытке создать модель
-    с существующим уникальным полем.
+    The error scheme that occurs when attempting to create a model with an existing unique field.
     """
 
     field: str
+    value: str

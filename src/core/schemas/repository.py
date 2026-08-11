@@ -1,38 +1,72 @@
 import uuid
-from typing import Generic, TypeVar
-from pydantic import BaseModel
+from typing import TypeVar
+
+from pydantic import BaseModel, ConfigDict
 
 IdType = TypeVar("IdType")
 
 
-class CreateSchemaGeneric(BaseModel, Generic[IdType]):
+class BaseSchema(BaseModel):
+    model_config = ConfigDict(
+        from_attributes=True,  # validates schema from class attributes
+        validate_by_name=True,  # allows to create schema with aliases its attribute
+        validate_assignment=True,  # validates types if schema already created
+    )
+
+
+class CreateSchemaGeneric[IdType](BaseSchema):
     """
-    Схема для создания модели.
+    Create model schema generic.
     """
 
-    id: IdType | None = None
 
-
-class ReadSchemaGeneric(BaseModel, Generic[IdType]):
+class ReadSchemaGeneric[IdType](BaseSchema):
     """
-    Схема для чтения модели.
-    """
-
-    id: IdType
-
-
-class UpdateSchemaGeneric(BaseModel, Generic[IdType]):
-    """
-    Схема для обновления модели.
+    Read model schema generic.
     """
 
     id: IdType
 
 
-CreateSchemaInt = CreateSchemaGeneric[int]
-ReadSchemaInt = ReadSchemaGeneric[int]
-UpdateSchemaInt = UpdateSchemaGeneric[int]
+class UpdateSchemaGeneric[IdType](BaseSchema):
+    """
+    Update model schema generic.
+    """
 
-CreateSchemaUUID = CreateSchemaGeneric[uuid.UUID]
-ReadSchemaUUID = ReadSchemaGeneric[uuid.UUID]
-UpdateSchemaUUID = UpdateSchemaGeneric[uuid.UUID]
+    id: IdType | None = None  # need for bulk_update
+
+
+class CreateSchemaInt(CreateSchemaGeneric[int]):
+    """
+    Create model schema with int id type.
+    """
+
+
+class ReadSchemaInt(ReadSchemaGeneric[int]):
+    """
+    Read model schema with int id type.
+    """
+
+
+class UpdateSchemaInt(UpdateSchemaGeneric[int]):
+    """
+    Update model schema with int id type.
+    """
+
+
+class CreateSchemaUUID(CreateSchemaGeneric[uuid.UUID]):
+    """
+    Create model schema with UUID id type.
+    """
+
+
+class ReadSchemaUUID(ReadSchemaGeneric[uuid.UUID]):
+    """
+    Read model schema with UUID id type.
+    """
+
+
+class UpdateSchemaUUID(UpdateSchemaGeneric[uuid.UUID]):
+    """
+    Update model schema with UUID id type.
+    """
