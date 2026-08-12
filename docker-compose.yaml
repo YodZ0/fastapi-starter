@@ -1,29 +1,34 @@
 services:
-  app:
-    build: .
-    container_name: fastapi
-    ports:
-      - "8000:8000"
-    networks:
-      - local
-
-  pg:
-    image: postgres:latest
-    container_name: postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+  # --- DATABASE ---
+  db:
+    image: postgres:17.10-alpine
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: ${DB__USER}
+      POSTGRES_PASSWORD: ${DB__PASSWORD}
+      POSTGRES_DB: ${DB__NAME}
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready" ]
-      interval: 5s
-      timeout: 3s
-      retries: 3
-    networks:
-      - local
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
+      interval: 10s
+      timeout: 2s
+      retries: 10
+      start_period: 30s
+    volumes:
+      - pg_data:/var/lib/postgresql/data
 
-networks:
-  local:
+  # --- BACKEND ---
+  backend:
+    container_name: fastapi-app
+    build:
+      context: .
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      prestart:
+        condition: service_completed_successfully
+
 
 volumes:
-  pgdata:
+  pg_data:
