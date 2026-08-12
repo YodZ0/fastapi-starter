@@ -29,7 +29,11 @@ handlers:
     stream: ext://sys.stdout
 
 loggers:
-  app:
+  # Must match the top-level package name: modules call
+  # logging.getLogger(__name__), which yields "src.<module>". A logger named
+  # after anything else here is simply never used, and application records fall
+  # through to root instead.
+  src:
     level: "$log_level"
     handlers: [ console ]
     propagate: false
