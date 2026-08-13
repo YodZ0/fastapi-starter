@@ -22,7 +22,7 @@ class ModelIntegrityError(BusinessLogicException):
         self,
         model: type[ModelType] | str,
         action: ModelActionEnum,
-        *args,
+        *args: object,
         message: str | None = None,
     ) -> None:
         super().__init__(*args)
@@ -56,7 +56,7 @@ class ModelNotFoundError(BusinessLogicException):
     def __init__(
         self,
         model: type[ModelType] | str,
-        *args,
+        *args: object,
         model_id: IdType | Iterable[IdType] | None = None,
         message: str | None = None,
     ) -> None:
@@ -86,7 +86,7 @@ class SortingFieldNotFoundError(BusinessLogicException):
     def __init__(
         self,
         field: str,
-        *args,
+        *args: object,
         allowed_fields: str | None = None,
     ) -> None:
         super().__init__(*args)

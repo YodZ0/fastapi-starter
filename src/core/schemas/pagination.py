@@ -21,9 +21,8 @@ class PaginationSchema(BaseModel):
 
 @dataclass(frozen=True)
 class PaginationModelResult(Generic[ModelType]):
-    # Sequence, а не list: сюда кладут результат `.scalars().all()`, а он по
-    # типу именно Sequence. Наружу набор только читают и перекладывают в схемы,
-    # так что сужение до list ничего не давало и требовало копии на каждом
-    # вызове.
+    # Sequence, not list: this holds the result of `.scalars().all()`, which is
+    # typed as a Sequence. Callers only read the set and map it into schemas, so
+    # narrowing to list bought nothing and forced a copy on every call.
     objects: Sequence[ModelType]
     count: int

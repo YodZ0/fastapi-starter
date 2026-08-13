@@ -56,7 +56,7 @@ class CRUDRepository(
             raise TypeError(f"Can't instantiate abstract class {type(self).__name__}")
         self._session_manager = session_manager
 
-    def __init_subclass__(cls, **kwargs) -> None:
+    def __init_subclass__(cls, **kwargs: object) -> None:
         """
         Initialize the class.
 
@@ -113,7 +113,7 @@ class CRUDRepository(
         cls.update_models_mapping = local_update_models_mapping
         cls.model_identities_mapping = local_model_identities_mapping
 
-        return None
+        return
 
     async def get(self, obj_id: IdType) -> ModelWithIdType:
         """
@@ -218,8 +218,8 @@ class CRUDRepository(
         update_schema: UpdateSchemaBaseType,
     ) -> ModelWithIdType | None:
         """
-        Обновление записи.
-        Передаются только те поля, которые были установлены (exclude_unset=True).
+        Update a record.
+        Only the fields that were explicitly set are sent (exclude_unset=True).
         """
         update_data = update_schema.model_dump(exclude_unset=True)
         if not update_data:
@@ -242,7 +242,7 @@ class CRUDRepository(
 
     async def bulk_update(self, update_data: Sequence[UpdateSchemaBaseType]) -> None:
         """
-        Массовое обновление записей (executemany).
+        Bulk update records (executemany).
         """
         if len(update_data) == 0:
             return
@@ -270,8 +270,8 @@ class CRUDRepository(
 
     async def delete(self, obj_id: IdType) -> ModelWithIdType | None:
         """
-        Удаляет запись по ее ID.
-        Возвращает объект, если он существовал, иначе None.
+        Delete a record by its ID.
+        Returns the object if it existed, otherwise None.
         """
         async with self._session_manager.get_session() as s:
             stmt = (
@@ -282,8 +282,8 @@ class CRUDRepository(
 
     async def bulk_delete(self, obj_ids: Sequence[IdType]) -> Sequence[ModelWithIdType]:
         """
-        Массовое удаление группы записей по списку ID.
-        Возвращает список удаленных объектов.
+        Bulk delete a group of records by a list of IDs.
+        Returns the list of deleted objects.
         """
         if not obj_ids:
             return []
@@ -303,7 +303,7 @@ class CRUDRepository(
         pagination: PaginationSchema,
     ) -> Select[tuple[ModelWithIdType]]:
         """
-        Применяет пагинацию к SELECT запросу.
+        Apply pagination to a SELECT query.
         """
         return query.limit(pagination.limit).offset(pagination.offset)
 
@@ -313,7 +313,7 @@ class CRUDRepository(
         sorting: Sequence[str],
     ) -> Select[tuple[ModelWithIdType]]:
         """
-        Применяет сортировку к SELECT запросу.
+        Apply sorting to a SELECT query.
         """
         order_by_expr: list[UnaryExpression[Any]] = []
         for sf in sorting:
@@ -333,7 +333,7 @@ class CRUDRepository(
         strict: bool,
     ) -> None:
         """
-        Проверяет что получены все модели по IDs.
+        Check that a model was found for every requested ID.
         """
         if strict and len(ids) != len(models):
             raise ModelNotFoundError(

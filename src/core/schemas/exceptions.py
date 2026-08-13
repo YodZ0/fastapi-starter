@@ -13,7 +13,8 @@ class BusinessLogicExceptionSchema(BaseModel):
 
 class ModelAlreadyExistsErrorSchema(BusinessLogicExceptionSchema):
     """
-    The error scheme that occurs when attempting to create a model with an existing unique field.
+    The error scheme that occurs when attempting to create a model with an
+    existing unique field.
     """
 
     field: str
