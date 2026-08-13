@@ -21,8 +21,6 @@ def create_dependency_graph(
     container = setup_async_container()
     html_content = render_mermaid(container)
     output.parent.mkdir(parents=True, exist_ok=True)
-
-    with open(output, "w", encoding="utf-8") as f:
-        f.write(html_content)
+    output.write_text(html_content, encoding="utf-8")
 
     typer.echo(f"dishka graph has been created at {output!r}")
