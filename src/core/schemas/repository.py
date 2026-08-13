@@ -19,6 +19,11 @@ class CreateSchemaGeneric[IdType](BaseSchema):
     Create model schema generic.
     """
 
+    # Optional on purpose: the identifier is normally assigned by the database,
+    # but `upsert` and seeding both need a way to pass an explicit one. The
+    # repository drops the key from the INSERT when it is left as None.
+    id: IdType | None = None
+
 
 class ReadSchemaGeneric[IdType](BaseSchema):
     """
