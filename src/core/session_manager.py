@@ -5,7 +5,7 @@ Both context managers are re-entrant: if a transaction is already open,
 it is reused instead of starting a nested one.
 """
 
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from sqlalchemy import text
