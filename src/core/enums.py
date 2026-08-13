@@ -33,3 +33,4 @@ class ModelActionEnum(StrEnum):
 
     BULK_INSERT = auto()
     BULK_UPDATE = auto()
+    BULK_DELETE = auto()
