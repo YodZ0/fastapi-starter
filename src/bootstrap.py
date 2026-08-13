@@ -4,12 +4,14 @@ Creates app, applies: middleware, routes, handlers etc.
 """
 
 import logging
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI
 
 from src.di import setup_async_container
+from src.handlers import apply_exception_handlers
 from src.logs import setup_logging
 from src.middleware import apply_middleware
 from src.router import apply_routes
@@ -21,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     logger.info("Application started successfully!")
     yield
     await app.state.dishka_container.close()
@@ -46,6 +48,7 @@ def create_app() -> FastAPI:
     )
     app = apply_middleware(app)
     app = apply_routes(app)
+    apply_exception_handlers(app)
     container = setup_async_container()
     setup_dishka(container, app)
     return app
