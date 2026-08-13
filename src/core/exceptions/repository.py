@@ -7,8 +7,10 @@ from src.core.type_vars import IdType
 from .business_error import BusinessLogicException
 
 __all__ = (
+    "ModelIdRequiredError",
     "ModelIntegrityError",
     "ModelNotFoundError",
+    "SearchFieldNotFoundError",
     "SortingFieldNotFoundError",
 )
 
@@ -43,6 +45,12 @@ class ModelIntegrityError(BusinessLogicException):
                 msg += f" for model {model_name} insert or update."
             case ModelActionEnum.DELETE:
                 msg += f" for model {model_name} delete."
+            case ModelActionEnum.BULK_INSERT:
+                msg += f" for model {model_name} bulk insert."
+            case ModelActionEnum.BULK_UPDATE:
+                msg += f" for model {model_name} bulk update."
+            case ModelActionEnum.BULK_DELETE:
+                msg += f" for model {model_name} bulk delete."
         if self.message is not None:
             msg += f" {self.message}."
         return msg
@@ -78,6 +86,34 @@ class ModelNotFoundError(BusinessLogicException):
         return msg
 
 
+class ModelIdRequiredError(BusinessLogicException):
+    """
+    Error if an update was requested without an identifier.
+
+    Update schemas keep `id` optional so that a schema can be built field by
+    field, which means the repository has to reject the missing one itself
+    instead of letting it reach the WHERE clause.
+    """
+
+    def __init__(
+        self,
+        model: type[ModelType] | str,
+        *args: object,
+        schema: str | None = None,
+    ) -> None:
+        super().__init__(*args)
+        self.model = model
+        self.schema = schema
+
+    @property
+    def msg(self) -> str:
+        model_name = self.model if isinstance(self.model, str) else self.model.__name__
+        msg = f"Model {model_name} cannot be updated without an id."
+        if self.schema is not None:
+            msg += f" Set it on the {self.schema} schema."
+        return msg
+
+
 class SortingFieldNotFoundError(BusinessLogicException):
     """
     Error if model does not have sorting field.
@@ -96,6 +132,29 @@ class SortingFieldNotFoundError(BusinessLogicException):
     @property
     def msg(self) -> str:
         msg = f"Sorting field not found {self.field!r}."
+        if self.allowed_fields is not None:
+            msg += f" Allowed fields: {self.allowed_fields}."
+        return msg
+
+
+class SearchFieldNotFoundError(BusinessLogicException):
+    """
+    Error if model does not have search field.
+    """
+
+    def __init__(
+        self,
+        field: str,
+        *args: object,
+        allowed_fields: str | None = None,
+    ) -> None:
+        super().__init__(*args)
+        self.field = field
+        self.allowed_fields = allowed_fields
+
+    @property
+    def msg(self) -> str:
+        msg = f"Search field not found {self.field!r}."
         if self.allowed_fields is not None:
             msg += f" Allowed fields: {self.allowed_fields}."
         return msg
