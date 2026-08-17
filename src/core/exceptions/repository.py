@@ -114,7 +114,7 @@ class ModelIdRequiredError(BusinessLogicException):
     def msg(self) -> str:
         model_name = self.model if isinstance(self.model, str) else self.model.__name__
         msg = f"Model {model_name} cannot be updated without an id."
-        if self.schema is not None:
+        if self.schema:
             msg += f" Set it on the {self.schema} schema."
         return msg
 
