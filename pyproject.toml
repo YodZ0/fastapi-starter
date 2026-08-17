@@ -110,6 +110,11 @@ exclude = ["^alembic/versions/"]
 strict = true
 warn_unreachable = true
 
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
 [tool.pydantic-mypy]
 init_typed = true
 init_forbid_extra = true
@@ -124,7 +129,10 @@ minversion = "8.0"
 testpaths = ["tests"]
 addopts = "-vvv --strict-markers --strict-config"
 pythonpath = ["."]
+filterwarnings = ["error"]
 asyncio_mode = "auto"
-# Unset, this warns on every run under pytest-asyncio 1.x. "function" keeps each
-# test on its own event loop, which is what an isolated test wants.
-asyncio_default_fixture_loop_scope = "function"
+# To kepp tests isolated use transaction, not event loop.
+# A common loop is needed so that the session-scoped engine and asyncpg-connections
+# live in the same place as the tests
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
