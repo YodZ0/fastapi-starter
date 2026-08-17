@@ -1,6 +1,9 @@
 import pytest
 
-from src.core.exceptions import ModelNotFoundError
+from src.core.exceptions import (
+    ModelIdRequiredError,
+    ModelNotFoundError,
+)
 
 
 class FakeModel:
@@ -57,3 +60,30 @@ class TestModelNotFoundError:
     ) -> None:
         exc = ModelNotFoundError("FakeModel", model_id=model_id, message=message)
         assert exc.msg == expected
+
+
+class TestModelIdRequiredError:
+    @pytest.mark.parametrize(
+        ("model", "expected"),
+        [
+            ("FakeModel", "Model FakeModel cannot be updated without an id."),
+            (FakeModel, "Model FakeModel cannot be updated without an id."),
+        ],
+        ids=("string_model", "cls_model"),
+    )
+    def test_msg_render_model_name(self, model, expected) -> None:
+        assert ModelIdRequiredError(model).msg == expected
+
+    @pytest.mark.parametrize(
+        ("schema", "expected"),
+        [
+            (
+                "ABC",
+                "Model Fake cannot be updated without an id. Set it on the ABC schema.",
+            ),
+            ("", "Model Fake cannot be updated without an id."),
+        ],
+        ids=("with_schema", "empty_string"),
+    )
+    def test_msg_render_schema(self, schema, expected) -> None:
+        assert ModelIdRequiredError("Fake", schema=schema).msg == expected
