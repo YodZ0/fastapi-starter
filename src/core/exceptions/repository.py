@@ -159,7 +159,7 @@ class SearchFieldNotFoundError(BusinessLogicException):
         self,
         field: str,
         *args: object,
-        allowed_fields: str | None = None,
+        allowed_fields: Iterable[str] | str | None = None,
     ) -> None:
         super().__init__(*args)
         self.field = field
@@ -168,6 +168,14 @@ class SearchFieldNotFoundError(BusinessLogicException):
     @property
     def msg(self) -> str:
         msg = f"Search field not found {self.field!r}."
-        if self.allowed_fields is not None:
-            msg += f" Allowed fields: {self.allowed_fields}."
+
+        if self.allowed_fields:
+            if isinstance(self.allowed_fields, str):
+                fields_str = self.allowed_fields
+            else:
+                fields_str = ", ".join(self.allowed_fields)
+
+            msg += f" Allowed fields: {fields_str}."
+        else:
+            msg += " No searching fields are allowed."
         return msg
