@@ -3,6 +3,7 @@ import pytest
 from src.core.exceptions import (
     ModelIdRequiredError,
     ModelNotFoundError,
+    SearchFieldNotFoundError,
     SortingFieldNotFoundError,
 )
 
@@ -118,6 +119,41 @@ class TestSortingFieldNotFoundError:
         expected_msg = f"Sorting field not found 'ABC'. {expected}"
         assert (
             SortingFieldNotFoundError(
+                "ABC",
+                allowed_fields=allowed,
+            ).msg
+            == expected_msg
+        )
+
+
+class TestSearchFieldNotFoundError:
+    @pytest.mark.parametrize(
+        ("field", "expected"),
+        [
+            ("ABC", "Search field not found 'ABC'."),
+            ("", "Search field not found ''."),
+        ],
+        ids=("string", "empty_string"),
+    )
+    def test_msg_render_field(self, field, expected) -> None:
+        expected_msg = f"{expected} No searching fields are allowed."
+        assert SearchFieldNotFoundError(field).msg == expected_msg
+
+    @pytest.mark.parametrize(
+        ("allowed", "expected"),
+        [
+            ("a", "Allowed fields: a."),
+            (("a", "b"), "Allowed fields: a, b."),
+            ("", "No searching fields are allowed."),
+            ([], "No searching fields are allowed."),
+            (None, "No searching fields are allowed."),
+        ],
+        ids=("single", "multiple", "empty_str", "empty_list", "none"),
+    )
+    def test_msg_render_allowed_fields(self, allowed, expected) -> None:
+        expected_msg = f"Search field not found 'ABC'. {expected}"
+        assert (
+            SearchFieldNotFoundError(
                 "ABC",
                 allowed_fields=allowed,
             ).msg
