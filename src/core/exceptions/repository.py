@@ -76,14 +76,19 @@ class ModelNotFoundError(BusinessLogicException):
     @property
     def msg(self) -> str:
         model_name = self.model if isinstance(self.model, str) else self.model.__name__
-        if self.message is not None:
-            return self.message
         msg = f"Unable to find {model_name} model"
         if self.model_id is not None:
-            if isinstance(self.model_id, Iterable):
-                return f"{msg} with ids: [{', '.join(map(str, self.model_id))}]"
-            return f"{msg} with id: {self.model_id}"
+            if not self._is_collection(self.model_id):
+                msg += f" with id: {self.model_id}"
+            else:
+                msg += f" with ids: [{', '.join(map(str, self.model_id))}]"
+        if self.message:
+            msg += f". {self.message}"
         return msg
+
+    @staticmethod
+    def _is_collection(value: IdType | Iterable[IdType]) -> bool:
+        return isinstance(value, (list, set, tuple))
 
 
 class ModelIdRequiredError(BusinessLogicException):
