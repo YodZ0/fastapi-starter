@@ -3,6 +3,7 @@ import pytest
 from src.core.exceptions import (
     ModelIdRequiredError,
     ModelNotFoundError,
+    SortingFieldNotFoundError,
 )
 
 
@@ -87,3 +88,38 @@ class TestModelIdRequiredError:
     )
     def test_msg_render_schema(self, schema, expected) -> None:
         assert ModelIdRequiredError("Fake", schema=schema).msg == expected
+
+
+class TestSortingFieldNotFoundError:
+    @pytest.mark.parametrize(
+        ("field", "expected"),
+        [
+            ("ABC", "Sorting field not found 'ABC'."),
+            ("", "Sorting field not found ''."),
+        ],
+        ids=("string", "empty_string"),
+    )
+    def test_msg_render_field(self, field, expected) -> None:
+        expected_msg = f"{expected} No sorting fields are allowed."
+        assert SortingFieldNotFoundError(field).msg == expected_msg
+
+    @pytest.mark.parametrize(
+        ("allowed", "expected"),
+        [
+            ("a", "Allowed fields: a."),
+            (("a", "b"), "Allowed fields: a, b."),
+            ("", "No sorting fields are allowed."),
+            ([], "No sorting fields are allowed."),
+            (None, "No sorting fields are allowed."),
+        ],
+        ids=("single", "multiple", "empty_str", "empty_list", "none"),
+    )
+    def test_msg_render_allowed_fields(self, allowed, expected) -> None:
+        expected_msg = f"Sorting field not found 'ABC'. {expected}"
+        assert (
+            SortingFieldNotFoundError(
+                "ABC",
+                allowed_fields=allowed,
+            ).msg
+            == expected_msg
+        )
