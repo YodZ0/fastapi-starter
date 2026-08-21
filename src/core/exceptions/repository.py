@@ -35,23 +35,23 @@ class ModelIntegrityError(BusinessLogicException):
     @property
     def msg(self) -> str:
         model_name = self.model if isinstance(self.model, str) else self.model.__name__
-        msg = "Integrity error"
+        msg = f"Integrity error for model {model_name}"
         match self.action:
             case ModelActionEnum.INSERT:
-                msg += f" for model {model_name} insert."
+                msg += " insert."
             case ModelActionEnum.UPDATE:
-                msg += f" for model {model_name} update."
+                msg += " update."
             case ModelActionEnum.UPSERT:
-                msg += f" for model {model_name} insert or update."
+                msg += " insert or update."
             case ModelActionEnum.DELETE:
-                msg += f" for model {model_name} delete."
+                msg += " delete."
             case ModelActionEnum.BULK_INSERT:
-                msg += f" for model {model_name} bulk insert."
+                msg += " bulk insert."
             case ModelActionEnum.BULK_UPDATE:
-                msg += f" for model {model_name} bulk update."
+                msg += " bulk update."
             case ModelActionEnum.BULK_DELETE:
-                msg += f" for model {model_name} bulk delete."
-        if self.message is not None:
+                msg += " bulk delete."
+        if self.message:
             msg += f" {self.message}."
         return msg
 
