@@ -1,7 +1,9 @@
 import pytest
 
+from src.core.enums import ModelActionEnum
 from src.core.exceptions import (
     ModelIdRequiredError,
+    ModelIntegrityError,
     ModelNotFoundError,
     SearchFieldNotFoundError,
     SortingFieldNotFoundError,
@@ -159,3 +161,54 @@ class TestSearchFieldNotFoundError:
             ).msg
             == expected_msg
         )
+
+
+class TestModelIntegrityError:
+    @pytest.mark.parametrize(
+        ("model", "expected"),
+        [
+            ("FakeModel", "Integrity error for model FakeModel insert."),
+            (FakeModel, "Integrity error for model FakeModel insert."),
+        ],
+        ids=("string_model", "cls_model"),
+    )
+    def test_msg_render_model_name(self, model, expected) -> None:
+        exc = ModelIntegrityError(model, ModelActionEnum.INSERT)
+        assert exc.msg == expected
+
+    @pytest.mark.parametrize(
+        ("model_action", "expected"),
+        [
+            (ModelActionEnum.INSERT, "insert"),
+            (ModelActionEnum.UPDATE, "update"),
+            (ModelActionEnum.UPSERT, "insert or update"),
+            (ModelActionEnum.DELETE, "delete"),
+            (ModelActionEnum.BULK_INSERT, "bulk insert"),
+            (ModelActionEnum.BULK_UPDATE, "bulk update"),
+            (ModelActionEnum.BULK_DELETE, "bulk delete"),
+        ],
+        ids=(
+            "insert",
+            "update",
+            "upsert",
+            "delete",
+            "bulk insert",
+            "bulk update",
+            "bulk delete",
+        ),
+    )
+    def test_msg_render_model_action(self, model_action, expected) -> None:
+        expected_msg = f"Integrity error for model FakeModel {expected}."
+        assert ModelIntegrityError("FakeModel", action=model_action).msg == expected_msg
+
+    @pytest.mark.parametrize(
+        ("message", "expected"),
+        [
+            ("ABC", "Integrity error for model FakeModel insert. ABC."),
+            ("", "Integrity error for model FakeModel insert."),
+        ],
+        ids=("string", "empty"),
+    )
+    def test_msg_render_message(self, message, expected) -> None:
+        exc = ModelIntegrityError("FakeModel", ModelActionEnum.INSERT, message=message)
+        assert exc.msg == expected
