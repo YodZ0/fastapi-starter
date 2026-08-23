@@ -1,0 +1,65 @@
+# Hook versions are pinned deliberately:
+#   - `pre-commit-hooks` is standalone, so `pre-commit autoupdate` may bump it freely.
+#   - `ruff-pre-commit` MUST stay on the same version as the `ruff` pin in uv.lock,
+#     otherwise the hook and a local `uv run ruff check` enforce different rules.
+#     After `autoupdate` bumps it, bump the dev dependency to match (or revert).
+#   - `mypy` runs from the project venv, so uv.lock is its single source of truth.
+
+repos:
+  # Standard
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace      # Strip trailing whitespace at line ends
+      - id: end-of-file-fixer        # Leave exactly one newline at end of file
+      - id: check-yaml               # Check YAML files
+      - id: check-toml               # Check TOML files
+      - id: check-added-large-files  # Block files over 500 KB size
+      - id: detect-private-key       # Detect committed private keys
+      - id: check-merge-conflict     # Block leftover conflict markers
+      - id: check-case-conflict      # Block names that collide on Windows/macOS
+
+  # Ruff
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.2
+    hooks:
+      - id: ruff-check
+        args: [ --fix ]
+      - id: ruff-format
+
+  # Mypy
+  # Run from the project venv rather than the upstream mirror: the `pydantic.mypy`
+  # plugin and every third-party import (fastapi, sqlalchemy, dishka, ...) must be
+  # installed in the same environment as mypy. The mirror would need that entire
+  # dependency list duplicated into `additional_dependencies` and kept in sync by
+  # hand. Requires `uv` on PATH.
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        entry: uv run --frozen mypy
+        language: system
+        types_or: [ python, pyi ]
+        # mypy needs the whole package to resolve imports and follow types across
+        # modules; checking only the staged files reports phantom errors. The file
+        # set comes from `files` in [tool.mypy], so the hook takes no filenames -
+        # `types_or` above only decides *whether* this runs.
+        pass_filenames: false
+        require_serial: true
+
+  # Pytest
+  # The gate ruff and mypy cannot cover: neither of them can see a broken
+  # assertion. Runs from the project venv for the same reason as mypy above.
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: uv run --frozen pytest
+        language: system
+        types: [ python ]
+        # The scope comes from `testpaths` in [tool.pytest.ini_options], so the
+        # hook takes no filenames. Once suites that need Postgres appear here,
+        # narrow this to the ones that run without it (e.g. `-m "not
+        # integration"`) instead of dropping the hook.
+        pass_filenames: false
+        require_serial: true
