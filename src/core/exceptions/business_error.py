@@ -14,7 +14,7 @@ class BusinessLogicException(Exception, ABC):
         """
         Error type.
         """
-        return to_snake(type(self).__name__.replace("Error", ""))
+        return to_snake(type(self).__name__.removesuffix("Error"))
 
     @property
     @abstractmethod
