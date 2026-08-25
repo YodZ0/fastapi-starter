@@ -1,3 +1,5 @@
+import uuid
+
 import pytest
 
 from src.core.enums import ModelActionEnum
@@ -12,6 +14,20 @@ from src.core.exceptions import (
 
 class FakeModel:
     pass
+
+
+UUID_A = uuid.UUID("00000000-0000-0000-0000-000000000001")
+UUID_B = uuid.UUID("ffffffff-ffff-ffff-ffff-ffffffffffff")
+
+EXPECTED_ACTION_PHRASES = {
+    ModelActionEnum.INSERT: "insert",
+    ModelActionEnum.UPDATE: "update",
+    ModelActionEnum.UPSERT: "insert or update",
+    ModelActionEnum.DELETE: "delete",
+    ModelActionEnum.BULK_INSERT: "bulk insert",
+    ModelActionEnum.BULK_UPDATE: "bulk update",
+    ModelActionEnum.BULK_DELETE: "bulk delete",
+}
 
 
 class TestModelNotFoundError:
@@ -41,14 +57,27 @@ class TestModelNotFoundError:
         ("model_id", "expected"),
         [
             ([], "Unable to find FakeModel model with ids: []"),
-            ([1, 2, 3], "Unable to find FakeModel model with ids: [1, 2, 3]"),
-            (("abc", "cba"), "Unable to find FakeModel model with ids: [abc, cba]"),
-            ((1, "abc"), "Unable to find FakeModel model with ids: [1, abc]"),
+            (("cba", "abc"), "Unable to find FakeModel model with ids: [abc, cba]"),
+            ([10, 2], "Unable to find FakeModel model with ids: [2, 10]"),
+            (
+                {"d", "b", "a", "c"},
+                "Unable to find FakeModel model with ids: [a, b, c, d]",
+            ),
+            (
+                {UUID_B, UUID_A},
+                f"Unable to find FakeModel model with ids: [{UUID_A}, {UUID_B}]",
+            ),
         ],
-        ids=("empty", "list", "tuple", "mixed"),
+        ids=("empty", "tuple", "int_sorts_as_number", "str_set", "uuid_set"),
     )
     def test_msg_render_multiple_ids(self, model_id, expected) -> None:
         assert ModelNotFoundError("FakeModel", model_id=model_id).msg == expected
+
+    def test_msg_render_multiple_ids_is_order_independent(self) -> None:
+        ids = ["b", "a", "c"]
+        exc_a = ModelNotFoundError("FakeModel", model_id=ids)
+        exc_b = ModelNotFoundError("FakeModel", model_id=list(reversed(ids)))
+        assert exc_a.msg == exc_b.msg
 
     @pytest.mark.parametrize(
         ("model_id", "message", "expected"),
@@ -176,28 +205,15 @@ class TestModelIntegrityError:
         exc = ModelIntegrityError(model, ModelActionEnum.INSERT)
         assert exc.msg == expected
 
-    @pytest.mark.parametrize(
-        ("model_action", "expected"),
-        [
-            (ModelActionEnum.INSERT, "insert"),
-            (ModelActionEnum.UPDATE, "update"),
-            (ModelActionEnum.UPSERT, "insert or update"),
-            (ModelActionEnum.DELETE, "delete"),
-            (ModelActionEnum.BULK_INSERT, "bulk insert"),
-            (ModelActionEnum.BULK_UPDATE, "bulk update"),
-            (ModelActionEnum.BULK_DELETE, "bulk delete"),
-        ],
-        ids=(
-            "insert",
-            "update",
-            "upsert",
-            "delete",
-            "bulk insert",
-            "bulk update",
-            "bulk delete",
-        ),
-    )
-    def test_msg_render_model_action(self, model_action, expected) -> None:
+    def test_every_action_has_an_expected_phrase(self) -> None:
+        """
+        Guard EXPECTED_ACTION_PHRASES against the enum growing underneath it.
+        """
+        assert set(EXPECTED_ACTION_PHRASES) == set(ModelActionEnum)
+
+    @pytest.mark.parametrize("model_action", list(ModelActionEnum))
+    def test_msg_render_model_action(self, model_action) -> None:
+        expected = EXPECTED_ACTION_PHRASES[model_action]
         expected_msg = f"Integrity error for model FakeModel {expected}."
         assert ModelIntegrityError("FakeModel", action=model_action).msg == expected_msg
 

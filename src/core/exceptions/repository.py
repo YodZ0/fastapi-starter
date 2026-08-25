@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+from typing import TypeIs, assert_never
 
 from src.core.enums import ModelActionEnum
 from src.core.models.type_vars import ModelType
@@ -51,6 +52,10 @@ class ModelIntegrityError(BusinessLogicException):
                 msg += " bulk update."
             case ModelActionEnum.BULK_DELETE:
                 msg += " bulk delete."
+            case _:
+                # Not dead code: it is what makes mypy reject a new
+                # ModelActionEnum member that nobody rendered here.
+                assert_never(self.action)
         if self.message:
             msg += f" {self.message}."
         return msg
@@ -81,13 +86,24 @@ class ModelNotFoundError(BusinessLogicException):
             if not self._is_collection(self.model_id):
                 msg += f" with id: {self.model_id}"
             else:
-                msg += f" with ids: [{', '.join(map(str, self.model_id))}]"
+                ids = ", ".join(map(str, sorted(self.model_id)))
+                msg += f" with ids: [{ids}]"
         if self.message:
             msg += f". {self.message}"
         return msg
 
     @staticmethod
-    def _is_collection(value: IdType | Iterable[IdType]) -> bool:
+    def _is_collection(
+        value: IdType | Iterable[IdType],
+    ) -> TypeIs[list[IdType] | set[IdType] | tuple[IdType, ...]]:
+        """
+        Narrow `model_id` to the collection forms the callers pass.
+
+        The return type spells out the concrete containers instead of
+        `Iterable[IdType]`, because `str` is itself an `Iterable[str]`: the wider
+        annotation would let mypy treat a plain string id as narrowed away in
+        the `else` branch, which is the opposite of what this check does.
+        """
         return isinstance(value, (list, set, tuple))
 
 

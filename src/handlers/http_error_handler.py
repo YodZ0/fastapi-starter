@@ -8,8 +8,10 @@ from fastapi import HTTPException, Request, Response, status
 from fastapi.exception_handlers import http_exception_handler
 
 from src.core.exceptions import (
+    ModelIdRequiredError,
     ModelIntegrityError,
     ModelNotFoundError,
+    SearchFieldNotFoundError,
     SortingFieldNotFoundError,
 )
 from src.settings import settings
@@ -74,12 +76,44 @@ async def model_integrity_error_handler(
     )
 
 
+async def model_id_required_error_handler(
+    request: Request,
+    error: ModelIdRequiredError,
+) -> Response:
+    """
+    Handler for errors raised if model ID is required.
+    """
+    return await http_exception_handler(
+        request,
+        HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error.get_schema(settings.debug).model_dump(),
+        ),
+    )
+
+
 async def sorting_field_not_found_error_handler(
     request: Request,
     error: SortingFieldNotFoundError,
 ) -> Response:
     """
     Handler for attempts to sort by a field the model does not have.
+    """
+    return await http_exception_handler(
+        request,
+        HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error.get_schema(settings.debug).model_dump(),
+        ),
+    )
+
+
+async def search_field_not_found_error_handler(
+    request: Request,
+    error: SearchFieldNotFoundError,
+) -> Response:
+    """
+    Handler for attempts to search by a field the model does not have.
     """
     return await http_exception_handler(
         request,
