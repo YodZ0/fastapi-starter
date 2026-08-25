@@ -15,13 +15,18 @@ class TestApplyExceptionHandlers:
         error into a 500 plus an "Unexpected error occurred!" traceback in the
         log. Only direct subclasses are required - Starlette resolves a handler
         by walking the MRO, so a subclass of an already handled error is covered
-        by its parent.
+        by its parent. Classes defined outside `src` are filtered out: test
+        doubles subclass the base as well, and they never reach a running app.
         """
         app = FastAPI()
 
         apply_exception_handlers(app)
 
-        expected = set(BusinessLogicException.__subclasses__())
+        expected = {
+            exception
+            for exception in BusinessLogicException.__subclasses__()
+            if exception.__module__.startswith("src.")
+        }
         missing = expected - set(app.exception_handlers)
         assert not missing, (
             "no exception handler registered for: "
