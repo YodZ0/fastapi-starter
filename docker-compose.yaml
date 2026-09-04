@@ -14,21 +14,22 @@ services:
       retries: 10
       start_period: 30s
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - fs_pg_data:/var/lib/postgresql/data
 
   # --- BACKEND ---
   backend:
-    container_name: fastapi-app
+    container_name: backend
     build:
       context: .
     env_file:
       - .env
+    environment:
+      UVICORN_HOST: ${RUN__HOST}
+      UVICORN_PORT: ${RUN__PORT}
+      UVICORN_WORKERS: ${RUN__WORKERS}
     depends_on:
       db:
         condition: service_healthy
-      prestart:
-        condition: service_completed_successfully
-
 
 volumes:
-  pg_data:
+  fs_pg_data:

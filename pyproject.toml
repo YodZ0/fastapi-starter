@@ -16,6 +16,9 @@ dependencies = [
     "typer>=0.27.1",
 ]
 
+[tool.uv]
+package = false
+
 [dependency-groups]
 dev = [
     "mypy>=2.3.0",

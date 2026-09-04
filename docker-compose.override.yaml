@@ -1,0 +1,19 @@
+services:
+  # --- DATABASE ---
+  db:
+    ports:
+      - "127.0.0.1:${DB__HOST_PORT:-5432}:5432"
+
+  # --- BACKEND ---
+  backend:
+    build:
+      target: dev
+    environment:
+      UVICORN_RELOAD: ${RUN__RELOAD}
+    ports:
+      - "127.0.0.1:${RUN__PORT:-8000}:8000"
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./alembic:/app/alembic
+      - ./.logging.yaml:/app/.logging.yaml

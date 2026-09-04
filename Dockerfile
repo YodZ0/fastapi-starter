@@ -1,60 +1,74 @@
 # syntax=docker/dockerfile:1
 
+ARG PYTHON_VERSION=3.13
+ARG UV_VERSION=0.11.3
+
+FROM ghcr.io/astral-sh/uv:${UV_VERSION} AS uv
+
 # ============= #
 # Stage 1: base #
 # ============= #
-FROM python:3.13-slim AS base
+FROM python:${PYTHON_VERSION}-slim AS base
 
-# uv is pinned, not `latest`, so the build stays reproducible.
-COPY --from=ghcr.io/astral-sh/uv:0.11.3 /uv /uvx /bin/
-
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
-
-# Precompile installed packages: slower build, faster container start-up.
-ENV UV_COMPILE_BYTECODE=1
-# Docker layers span filesystems, where uv cannot hardlink out of its cache.
-ENV UV_LINK_MODE=copy
-# Use the interpreter already in this image instead of downloading a managed one.
-ENV UV_PYTHON_DOWNLOADS=never
-# The venv deliberately lives OUTSIDE /app: docker-compose.override.yml bind-mounts
-# ./backend onto /app in dev, which would shadow an in-project .venv (and on a
-# Windows host would hand a Scripts/-layout venv to this Linux container).
-ENV UV_PROJECT_ENVIRONMENT=/opt/venv
-# Putting the venv on PATH keeps prestart.sh (`alembic`) and CMD (`uvicorn`)
-# working verbatim - no `uv run`, no activation step.
-ENV PATH="/opt/venv/bin:$PATH"
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /app
 
-# Dependency layer: manifests only, so editing source does not reinstall packages.
+# ============= #
+# Stage 2: deps #
+# ============= #
+FROM base AS deps
+
+COPY --from=uv /uv /uvx /bin/
+
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_PYTHON_DOWNLOADS=never \
+    UV_PROJECT_ENVIRONMENT=/opt/venv
+
 COPY pyproject.toml uv.lock ./
 
-# ============ #
-# Stage 2: dev #
-# ============ #
-FROM base AS dev
+# ============== #
+# Stage 3: build #
+# ============== #
+FROM deps AS builder
 
-# --frozen: fail if uv.lock disagrees with pyproject.toml rather than silently re-resolving.
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-install-project
+RUN --mount=type=cache,target=/root/.cache/uv,sharing=locked \
+    uv sync --locked --no-dev --no-install-project
+
+COPY .logging.yaml ./
+COPY alembic.ini ./
+COPY alembic ./alembic
+COPY src ./src
+
+RUN python -m compileall -q src
+
+# ============ #
+# Stage 4: dev #
+# ============ #
+FROM deps AS dev
+
+RUN --mount=type=cache,target=/root/.cache/uv,sharing=locked \
+    uv sync --locked
 
 COPY . ./
 
-CMD ["uvicorn", "src.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "src.main:app"]
 
 # ============= #
-# Stage 3: prod #
+# Stage 5: prod #
 # ============= #
 FROM base AS prod
 
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-install-project --no-dev
+RUN groupadd --system --gid 1001 app \
+ && useradd --system --uid 1001 --gid app --no-create-home app
 
-COPY . ./
+ COPY --from=builder --chown=app:app /opt/venv /opt/venv
+ COPY --from=builder --chown=app:app /app/.logging.yaml ./
+ COPY --from=builder --chown=app:app /app/src ./src
 
-# Fallback bind address so the container starts even if RUN__HOST is not supplied
-# via compose env (compose still overrides this when set).
-ENV RUN__HOST=0.0.0.0
+USER app
 
-CMD uvicorn src.main:app --host "$RUN__HOST" --port "$RUN__PORT"
+CMD ["uvicorn", "src.main:app"]
