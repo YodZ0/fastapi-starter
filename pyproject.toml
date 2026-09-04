@@ -22,6 +22,7 @@ dev = [
     "pre-commit>=4.6.2",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
+    "pytest-cov>=7.1.0",
     "ruff>=0.16.2",
     "types-pyyaml>=6.0.12",
 ]
@@ -137,3 +138,6 @@ asyncio_mode = "auto"
 # live in the same place as the tests
 asyncio_default_fixture_loop_scope = "session"
 asyncio_default_test_loop_scope = "session"
+
+[tool.coverage.run]
+source = ["src"]
