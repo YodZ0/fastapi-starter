@@ -10,5 +10,7 @@ if __name__ == "__main__":
         app="src.main:app",
         host=settings.run.host,
         port=settings.run.port,
+        workers=settings.run.workers,
+        reload=settings.run.reload,
         log_config=None,
     )

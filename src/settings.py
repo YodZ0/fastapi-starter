@@ -19,8 +19,10 @@ class ApplicationConfig(BaseModel):
 
 
 class RunConfig(BaseModel):
-    host: str = "127.0.0.1"
-    port: int = 8000
+    host: str
+    port: int
+    workers: int
+    reload: bool
 
 
 class APIConfigV1(BaseModel):
@@ -100,7 +102,7 @@ class Settings(BaseSettings):
     cors_origins: list[str]
 
     app: ApplicationConfig
-    run: RunConfig = RunConfig()
+    run: RunConfig
     api: APIConfig = APIConfig()
     db: DatabaseConfig
 
