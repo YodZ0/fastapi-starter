@@ -1,8 +1,8 @@
 services:
   # --- DATABASE ---
   db:
-    image: postgres:17.10-alpine
-    container_name: postgres-db
+    image: postgres:18.6-alpine
+    container_name: fs-postgres-db
     environment:
       POSTGRES_USER: ${DB__USER}
       POSTGRES_PASSWORD: ${DB__PASSWORD}
@@ -14,11 +14,11 @@ services:
       retries: 10
       start_period: 30s
     volumes:
-      - fs_pg_data:/var/lib/postgresql/data
+      - fs_pg_data:/var/lib/postgresql
 
   # --- BACKEND ---
   backend:
-    container_name: backend
+    container_name: fs-backend
     build:
       context: .
     env_file:
@@ -31,5 +31,28 @@ services:
       db:
         condition: service_healthy
 
+  # --- CACHE ---
+  redis:
+    image: redis:8.10.1-alpine
+    container_name: fs-redis-cache
+    restart: unless-stopped
+    command: >
+      redis-server
+      --requirepass ${REDIS__PASSWORD:?REDIS_PASSWORD is required}
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    environment:
+      REDIS_PASSWORD: ${REDIS__PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a $$REDIS_PASSWORD ping | grep -q PONG"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    volumes:
+      - fs_redis_data:/data
+
 volumes:
   fs_pg_data:
+  fs_redis_data:
