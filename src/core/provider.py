@@ -3,8 +3,8 @@ from collections.abc import AsyncIterable
 from dishka import Provider, Scope, provide
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
-from src.core.database import make_async_engine, make_async_session_factory
-from src.core.session_manager import SessionManager
+from src.core.database.session import make_async_engine, make_async_session_factory
+from src.core.database.session_manager import SessionManager
 from src.settings import Settings
 from src.settings import settings as app_settings
 

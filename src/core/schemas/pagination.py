@@ -4,7 +4,7 @@ from typing import Generic, TypeVar
 
 from pydantic import BaseModel
 
-from src.core.models.type_vars import ModelType
+from src.core.database.type_vars import ModelType
 
 TReadSchema = TypeVar("TReadSchema")
 

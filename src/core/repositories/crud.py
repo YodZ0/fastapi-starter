@@ -27,6 +27,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectin_polymorphic
 
+from src.core.database.session_manager import SessionManager
+from src.core.database.type_vars import ModelIntType, ModelUUIDType, ModelWithIdType
 from src.core.enums import ModelActionEnum
 from src.core.exceptions.repository import (
     ModelIdRequiredError,
@@ -35,9 +37,7 @@ from src.core.exceptions.repository import (
     SearchFieldNotFoundError,
     SortingFieldNotFoundError,
 )
-from src.core.models.type_vars import ModelIntType, ModelUUIDType, ModelWithIdType
 from src.core.schemas.pagination import PaginationResultSchema, PaginationSchema
-from src.core.session_manager import SessionManager
 from src.core.type_vars import IdType
 
 from .type_vars import (

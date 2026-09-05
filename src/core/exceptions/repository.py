@@ -1,8 +1,8 @@
 from collections.abc import Iterable
 from typing import TypeIs, assert_never
 
+from src.core.database.type_vars import ModelType
 from src.core.enums import ModelActionEnum
-from src.core.models.type_vars import ModelType
 from src.core.type_vars import IdType
 
 from .business_error import BusinessLogicException

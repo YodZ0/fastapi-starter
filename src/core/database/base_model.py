@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import UUID, Identity, Integer, MetaData, func
+from sqlalchemy import UUID, BigInteger, Identity, MetaData, func
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -39,7 +39,7 @@ class BaseInt(Base):
     __abstract__ = True
 
     id: Mapped[int] = mapped_column(
-        Integer,
+        BigInteger,
         Identity(always=True),
         primary_key=True,
     )
