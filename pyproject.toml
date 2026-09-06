@@ -12,6 +12,7 @@ dependencies = [
     "pydantic>=2.13.4",
     "pydantic-settings>=2.15.0",
     "pyyaml>=6.0.3",
+    "redis>=8.1.0",
     "sqlalchemy>=2.0.51",
     "typer>=0.27.1",
 ]
