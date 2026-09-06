@@ -89,6 +89,18 @@ class DatabaseConfig(BaseModel):
         return self.url.render_as_string(hide_password=False)
 
 
+class RedisConfig(BaseModel):
+    host: str
+    port: int
+    password: SecretStr
+    db: int
+
+    max_connections: int = 20
+    socket_timeout_seconds: float = 5.0
+    socket_connect_timeout_seconds: float = 5.0
+    health_check_interval_seconds: int = 30
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         case_sensitive=False,
@@ -105,6 +117,7 @@ class Settings(BaseSettings):
     run: RunConfig
     api: APIConfig = APIConfig()
     db: DatabaseConfig
+    redis: RedisConfig
 
 
 settings = Settings()

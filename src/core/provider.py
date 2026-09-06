@@ -1,8 +1,11 @@
 from collections.abc import AsyncIterable
 
 from dishka import Provider, Scope, provide
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
+from src.core.cache.client import make_redis_client
+from src.core.cache.redis import RedisCache
 from src.core.database.session import make_async_engine, make_async_session_factory
 from src.core.database.session_manager import SessionManager
 from src.settings import Settings
@@ -70,3 +73,40 @@ class CoreProvider(Provider):
         session: AsyncSession,
     ) -> SessionManager:
         return SessionManager(session)
+
+    # --- CACHE ---
+
+    @provide(scope=Scope.APP)
+    async def get_redis_client(
+        self,
+        settings: Settings,
+    ) -> AsyncIterable[Redis]:
+        """
+        Client holds the connection pool, so it lives for the whole application
+        and is closed on shutdown - otherwise every restart of the container
+        leaves its pooled sockets open on the server until they time out.
+
+        `aclose()` is the whole shutdown: because the client built the pool
+        itself, it also disconnects it. Handing it a ConnectionPool instead
+        would move that ownership out and make this line close nothing.
+
+        Disposal runs when the lifespan closes the dishka container.
+        """
+        client = make_redis_client(
+            host=settings.redis.host,
+            port=settings.redis.port,
+            db=settings.redis.db,
+            password=settings.redis.password,
+            max_connections=settings.redis.max_connections,
+            socket_timeout_seconds=settings.redis.socket_timeout_seconds,
+            socket_connect_timeout_seconds=settings.redis.socket_connect_timeout_seconds,
+            health_check_interval_seconds=settings.redis.health_check_interval_seconds,
+        )
+        try:
+            yield client
+        finally:
+            await client.aclose()
+
+    @provide(scope=Scope.APP)
+    def get_redis_cache(self, client: Redis) -> RedisCache:
+        return RedisCache(client)
