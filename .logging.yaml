@@ -4,13 +4,20 @@ disable_existing_loggers: false
 # "$log_level" is substituted by setup_logging() before this file is parsed,
 # so verbosity comes from the settings and this file is environment agnostic.
 
+# "request_id" comes from the context variable set by the request id
+# middleware and is "-" outside of a request. The filter is attached to the
+# handlers, so records of third party loggers carry it as well.
+filters:
+  request_id:
+    (): src.logs.RequestIdFilter
+
 formatters:
   standard:
-    format: "[%(levelname)s][%(asctime)s] - %(name)s : %(message)s"
+    format: "[%(levelname)s][%(asctime)s][%(request_id)s] - %(name)s : %(message)s"
     datefmt: "%Y-%m-%d %H:%M:%S"
 
   detailed:
-    format: "[%(levelname)s][%(asctime)s] - %(name)s [%(filename)s:%(funcName)s:%(lineno)d] : %(message)s"
+    format: "[%(levelname)s][%(asctime)s][%(request_id)s] - %(name)s [%(filename)s:%(funcName)s:%(lineno)d] : %(message)s"
     datefmt: "%Y-%m-%d %H:%M:%S"
 
 handlers:
@@ -19,6 +26,7 @@ handlers:
   console:
     class: logging.StreamHandler
     formatter: detailed
+    filters: [ request_id ]
     stream: ext://sys.stdout
 
   # For records whose source location points into a library rather than into
@@ -26,6 +34,7 @@ handlers:
   console_plain:
     class: logging.StreamHandler
     formatter: standard
+    filters: [ request_id ]
     stream: ext://sys.stdout
 
 loggers:

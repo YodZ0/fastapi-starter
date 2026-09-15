@@ -14,9 +14,28 @@ from typing import Any
 
 import yaml
 
+from src.core.context import get_request_id
 from src.settings import settings
 
 LOGGING_CONFIG_FILENAME = ".logging.yaml"
+
+
+class RequestIdFilter(logging.Filter):
+    """
+    Attaches the current request id to every record passing through.
+
+    Formatters reference it as `%(request_id)s`, and a record without the
+    attribute makes formatting fail, so the filter is attached to the handlers
+    rather than to the loggers: a handler filter sees every record it is about
+    to emit, including the ones propagated from third party loggers.
+
+    Outside of a request (startup, CLI, background tasks) the context variable
+    holds its default.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        record.request_id = get_request_id()
+        return True
 
 
 def setup_logging(base_dir: Path, log_level: str | None = None) -> None:
