@@ -54,12 +54,13 @@ repos:
     hooks:
       - id: pytest
         name: pytest
-        entry: uv run --frozen pytest
+        entry: uv run --frozen pytest -m "not integration"
         language: system
         types: [ python ]
         # The scope comes from `testpaths` in [tool.pytest.ini_options], so the
-        # hook takes no filenames. Once suites that need Postgres appear here,
-        # narrow this to the ones that run without it (e.g. `-m "not
-        # integration"`) instead of dropping the hook.
+        # hook takes no filenames. The integration suite is excluded by marker:
+        # it starts Postgres in Docker, which is too slow for a commit gate and
+        # not available on every machine. Run it separately with
+        # `uv run pytest -m integration`.
         pass_filenames: false
         require_serial: true

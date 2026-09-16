@@ -28,6 +28,7 @@ dev = [
     "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",
     "ruff>=0.16.2",
+    "testcontainers[postgres]>=4.9",
     "types-pyyaml>=6.0.12",
 ]
 
@@ -136,6 +137,7 @@ minversion = "8.0"
 testpaths = ["tests"]
 addopts = "-vvv --strict-markers --strict-config"
 pythonpath = ["."]
+markers = ["integration: requires a live Postgres in Docker"]
 filterwarnings = ["error"]
 asyncio_mode = "auto"
 # To kepp tests isolated use transaction, not event loop.
