@@ -108,5 +108,5 @@ class CoreProvider(Provider):
             await client.aclose()
 
     @provide(scope=Scope.APP)
-    def get_redis_cache(self, client: Redis) -> RedisCache:
-        return RedisCache(client)
+    def get_redis_cache(self, client: Redis, settings: Settings) -> RedisCache:
+        return RedisCache(client, key_prefix=settings.cache_key_prefix)
