@@ -2,6 +2,7 @@
 Application settings.
 """
 
+from enum import StrEnum
 from pathlib import Path
 
 from pydantic import BaseModel, SecretStr
@@ -9,6 +10,16 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import URL
 
 BASE_DIR = Path(__file__).resolve().parent.parent  # fastapi-starter
+
+
+class Environment(StrEnum):
+    """
+    Application environment.
+    """
+
+    DEV = "dev"
+    STAGE = "stage"
+    PROD = "prod"
 
 
 class ApplicationConfig(BaseModel):
@@ -100,6 +111,8 @@ class RedisConfig(BaseModel):
     socket_connect_timeout_seconds: float = 5.0
     health_check_interval_seconds: int = 30
 
+    key_prefix: str = "app"
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -110,6 +123,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
     debug: bool = False
+    environment: Environment = Environment.DEV
     base_dir: Path = BASE_DIR
     cors_origins: list[str]
 
@@ -118,6 +132,22 @@ class Settings(BaseSettings):
     api: APIConfig = APIConfig()
     db: DatabaseConfig
     redis: RedisConfig
+
+    @property
+    def cache_key_prefix(self) -> str:
+        """
+        Prefix every cache key is written under, e.g. "{app}:{env}:".
+
+        Assembled here rather than in the provider for the same reason as
+        `DatabaseConfig.url`: the setting hands out a value that is ready to
+        use, and it can be checked without a container. The environment is part
+        of it so that two deployments sharing a Redis instance cannot read or
+        evict each other's keys.
+
+        An empty `key_prefix` collapses to "{env}:" - no leading colon.
+        """
+        parts = [part for part in (self.redis.key_prefix, self.environment) if part]
+        return ":".join(parts) + ":"
 
 
 settings = Settings()
