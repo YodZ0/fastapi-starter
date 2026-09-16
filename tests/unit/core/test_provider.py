@@ -33,6 +33,7 @@ from src.core.provider import CoreProvider
 from src.settings import (
     ApplicationConfig,
     DatabaseConfig,
+    Environment,
     RedisConfig,
     RunConfig,
     Settings,
@@ -62,6 +63,13 @@ REDIS_HOST = "redis.invalid"
 REDIS_PORT = 6380
 REDIS_PASSWORD = SecretStr("redis-p@ss")
 REDIS_DB = 9
+REDIS_KEY_PREFIX = "test-prefix"
+
+ENVIRONMENT = Environment.STAGE
+
+# What `Settings.cache_key_prefix` builds out of the two values above, and
+# therefore what the provider has to hand to the cache.
+EXPECTED_CACHE_KEY_PREFIX = "test-prefix:stage:"
 
 # What `make_async_engine` must be called with, given the settings built below.
 # The connection URL is passed positionally and asserted separately.
@@ -99,6 +107,7 @@ def settings():
     have configured locally.
     """
     return Settings(
+        environment=ENVIRONMENT,
         cors_origins=["https://example.invalid"],
         app=ApplicationConfig(title="test"),
         run=RunConfig(host="127.0.0.1", port=8000, workers=1, reload=False),
@@ -126,6 +135,7 @@ def settings():
             socket_timeout_seconds=1.5,
             socket_connect_timeout_seconds=2.5,
             health_check_interval_seconds=15,
+            key_prefix=REDIS_KEY_PREFIX,
         ),
     )
 
@@ -303,6 +313,19 @@ class TestRedisClientConstruction:
 
         assert isinstance(cache, RedisCache)
         assert cache._client is make_client.return_value
+
+    async def test_cache_gets_the_assembled_key_prefix(
+        self,
+        container: AsyncContainer,
+    ) -> None:
+        """
+        The cache takes a ready-made prefix, so the provider is the only place
+        that can lose the environment part of it - and a cache writing under
+        the wrong namespace fails silently.
+        """
+        cache = await container.get(RedisCache)
+
+        assert cache._key_prefix == EXPECTED_CACHE_KEY_PREFIX
 
     async def test_building_the_cache_does_not_touch_the_client(
         self,
