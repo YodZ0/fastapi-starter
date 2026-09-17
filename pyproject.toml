@@ -22,6 +22,7 @@ package = false
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28.1",
     "mypy>=2.3.0",
     "pre-commit>=4.6.2",
     "pytest>=9.1.1",
@@ -140,11 +141,39 @@ pythonpath = ["."]
 markers = ["integration: requires a live Postgres in Docker"]
 filterwarnings = ["error"]
 asyncio_mode = "auto"
-# To kepp tests isolated use transaction, not event loop.
+# To keep tests isolated use transaction, not event loop.
 # A common loop is needed so that the session-scoped engine and asyncpg-connections
 # live in the same place as the tests
 asyncio_default_fixture_loop_scope = "session"
 asyncio_default_test_loop_scope = "session"
 
+# =============== #
+#    coverage     #
+# =============== #
+
+# `--cov` is deliberately NOT in `addopts`. The threshold below is measured
+# against the *whole* suite, and the pre-commit gate runs `-m "not integration"`
+# - which never executes `CRUDRepository` - so an always-on `--cov` would fail
+# every commit on a number that says nothing about the change being committed.
+# Coverage is a separate, explicit run:
+#
+#     uv run --frozen pytest --cov    # needs Docker; integration suite included
+#
 [tool.coverage.run]
 source = ["src"]
+# Branch coverage as well as line: the interesting gaps in this codebase are
+# `if debug`, `if self.message` and the like, where both lines run either way.
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+# The suite currently sits at 91%; the shortfall is `src/cli/` and `src/main.py`
+# - process entrypoints, deliberately not omitted, because hiding them would
+# make the number say something it does not mean.
+fail_under = 90
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    '@(abc\.)?abstractmethod',
+]
