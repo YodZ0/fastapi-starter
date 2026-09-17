@@ -13,8 +13,31 @@ services:
       timeout: 2s
       retries: 10
       start_period: 30s
+    restart: unless-stopped
     volumes:
       - fs_pg_data:/var/lib/postgresql
+
+  # --- MIGRATIONS ---
+  # A one-shot sidecar rather than a step in the backend's entrypoint: with N
+  # workers or N replicas, an entrypoint would run `upgrade head` N times in
+  # parallel against the same database.
+  #
+  # No `container_name`: the service is disposable, and a fixed name makes a
+  # second `up` collide with the exited container from the first.
+  #
+  # `alembic/env.py` reads `settings.db.url`, so the same `.env` the backend
+  # gets is what points it at the right database - `DB__HOST` must be `db`
+  # inside compose, as noted in `.env.template`. Redis is not involved.
+  migrate:
+    build:
+      context: .
+    env_file:
+      - .env
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
 
   # --- BACKEND ---
   backend:
@@ -27,11 +50,16 @@ services:
       UVICORN_HOST: ${RUN__HOST}
       UVICORN_PORT: ${RUN__PORT}
       UVICORN_WORKERS: ${RUN__WORKERS}
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+      # Serving requests against a schema that has not been upgraded yet is the
+      # failure this ordering exists to prevent.
+      migrate:
+        condition: service_completed_successfully
 
   # --- CACHE ---
   redis:

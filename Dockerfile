@@ -65,9 +65,14 @@ FROM base AS prod
 RUN groupadd --system --gid 1001 app \
  && useradd --system --uid 1001 --gid app --no-create-home app
 
- COPY --from=builder --chown=app:app /opt/venv /opt/venv
- COPY --from=builder --chown=app:app /app/.logging.yaml ./
- COPY --from=builder --chown=app:app /app/src ./src
+COPY --from=builder --chown=app:app /opt/venv /opt/venv
+COPY --from=builder --chown=app:app /app/.logging.yaml ./
+COPY --from=builder --chown=app:app /app/src ./src
+# The `migrate` compose service runs `alembic upgrade head` on this same
+# image, and alembic resolves its config relative to the working directory -
+# without these two it exits with "No config file 'alembic.ini' found".
+COPY --from=builder --chown=app:app /app/alembic.ini ./
+COPY --from=builder --chown=app:app /app/alembic ./alembic
 
 USER app
 
