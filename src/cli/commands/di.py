@@ -8,7 +8,7 @@ from src.di import setup_async_container
 from src.settings import settings
 
 di_app = typer.Typer()
-DEFAULT_OUTPUT_DIR = settings.base_dir / "docs" / "di_graph.html"
+DEFAULT_OUTPUT_DIR = settings.base_dir / "docs" / "graph" / "di_graph.html"
 
 
 @di_app.command(name="graph", help="Generate dishka dependency graph.")
